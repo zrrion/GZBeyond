@@ -1917,17 +1917,21 @@ static void SetMapxxFlag()
 //
 //==========================================================================
 
-static void D_DoomInit()
+static void D_CoalesceFileTypes()
 {
-	// Check response files before coalescing file parameters.
-	M_FindResponseFile ();
-
 	// Combine different file parameters with their pre-switch bits.
 	Args->CollectFiles("-deh", ".deh");
 	Args->CollectFiles("-bex", ".bex");
 	Args->CollectFiles("-exec", ".cfg");
 	Args->CollectFiles("-playdemo", ".lmp");
 	Args->CollectFiles("-file", NULL);	// anything left goes after -file
+}
+
+static void D_DoomInit()
+{
+	// Check response files before coalescing file parameters.
+	M_FindResponseFile ();
+	D_CoalesceFileTypes();
 
 	gamestate = GS_STARTUP;
 
@@ -2978,6 +2982,13 @@ static FILE* D_GetHashFile()
 
 static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString> allwads)
 {
+	// This is for when +logfile gets entered in the IWAD selector. The original one from the command line will not be present anymore when we get here.
+	FString logfile = Args->TakeValue("+logfile");
+	if (logfile.IsNotEmpty())
+	{
+		execLogfile(logfile);
+	}
+	
 	gameinfo.gametype = iwad_info->gametype;
 	gameinfo.flags = iwad_info->flags;
 	gameinfo.nokeyboardcheats = iwad_info->nokeyboardcheats;
@@ -3568,6 +3579,16 @@ static int D_DoomMain_Internal (void)
 		{
 			I_FatalError ("You cannot -file with the shareware version. Register!");
 		}
+		// If the user enters -file... in the IWAD selector we need to extend the file list here.
+		// -iwad will be ignored because we cannot deal with that without actually restarting the engine.
+		// all other commands with the exception of -errorlog and -config will be checked later.
+		// -errorlog is for batch checks so trying to handle it here is rather pointless.
+		// -config needs to be checked before and IWAD setup is done so adding it to the IWAD selector will just ignore it.
+		
+		pwads.Clear();
+		D_CoalesceFileTypes(); 	// redo for additional parameters from the IWAD selector.
+		GetCmdLineFiles(pwads);	// also redo for stuff from the IWAD selector.
+
 		allwads.Append(std::move(pwads));
 		lastIWAD = iwad;
 
