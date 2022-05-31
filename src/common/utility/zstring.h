@@ -138,8 +138,8 @@ public:
 	FString (FString &&other) : Chars(other.Chars) { other.ResetToNull(); }
 	FString (const char8_t *copyStr);
 	FString (const char8_t *copyStr, size_t copyLen);
-	FString (const char *copyStr) : FString((const char8_t*)copyStr) {}
-	FString (const char *copyStr, size_t copyLen): FString((const char8_t*)copyStr, copyLen) {}
+	FString (const_char_ptr copyStr) : FString((const char8_t*)copyStr) {}
+	FString (const_char_ptr copyStr, size_t copyLen): FString((const char8_t*)copyStr, copyLen) {}
 	FString (nullptr_t) : FString((char8_t*)nullptr) {}
 	FString (char8_t oneChar);
 	FString(const TArray<uint8_t> & source) : FString((char8_t*)source.Data(), source.Size()) {}
@@ -224,8 +224,8 @@ public:
 	void DeleteLastCharacter();
 
 	ptrdiff_t IndexOf (const FString &substr, ptrdiff_t startIndex=0) const;
-	ptrdiff_t IndexOf (const char *substr, ptrdiff_t startIndex=0) const;
-	ptrdiff_t IndexOf (char subchar, ptrdiff_t startIndex=0) const;
+	ptrdiff_t IndexOf (const char8_t *substr, ptrdiff_t startIndex=0) const;
+	//ptrdiff_t IndexOf (char subchar, ptrdiff_t startIndex=0) const;
 
 	ptrdiff_t IndexOfAny (const FString &charset, ptrdiff_t startIndex=0) const;
 	ptrdiff_t IndexOfAny (const char *charset, ptrdiff_t startIndex=0) const;

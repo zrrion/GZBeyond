@@ -295,12 +295,12 @@ FString FString::operator + (const FString &tail) const
 
 FString FString::operator + (const char *tail) const
 {
-	return FString (*this, tail);
+	return FString (*this, (char8_t*)tail);
 }
 
 FString operator + (const char *head, const FString &tail)
 {
-	return FString (head, tail);
+	return FString ((char8_t*)head, tail);
 }
 
 FString FString::operator + (char tail) const
@@ -434,7 +434,7 @@ FString FString::Left (size_t numChars) const
 	{
 		numChars = len;
 	}
-	return FString ((char*)Chars, numChars);
+	return FString(Chars, numChars);
 }
 
 FString FString::Right (size_t numChars) const
@@ -444,7 +444,7 @@ FString FString::Right (size_t numChars) const
 	{
 		numChars = len;
 	}
-	return FString ((char*)Chars + len - numChars, numChars);
+	return FString(Chars + len - numChars, numChars);
 }
 
 FString FString::Mid (size_t pos, size_t numChars) const
@@ -458,7 +458,7 @@ FString FString::Mid (size_t pos, size_t numChars) const
 	{
 		numChars = len - pos;
 	}
-	return FString ((char*)Chars + pos, numChars);
+	return FString(Chars + pos, numChars);
 }
 
 void FString::AppendCharacter(int codepoint)
@@ -485,16 +485,16 @@ void FString::DeleteLastCharacter()
 
 ptrdiff_t FString::IndexOf (const FString &substr, ptrdiff_t startIndex) const
 {
-	return IndexOf ((char*)substr.Chars, startIndex);
+	return IndexOf ((char8_t*)substr.Chars, startIndex);
 }
 
-ptrdiff_t FString::IndexOf (const char *substr, ptrdiff_t startIndex) const
+ptrdiff_t FString::IndexOf (const char8_t *substr, ptrdiff_t startIndex) const
 {
 	if (startIndex > 0 && Len() <= (size_t)startIndex)
 	{
 		return -1;
 	}
-	auto str = (char8_t*)strstr (charp(Chars) + startIndex, substr);
+	auto str = (char8_t*)strstr (charp(Chars) + startIndex, charp(substr));
 	if (str == NULL)
 	{
 		return -1;
@@ -502,6 +502,7 @@ ptrdiff_t FString::IndexOf (const char *substr, ptrdiff_t startIndex) const
 	return str - Chars;
 }
 
+#if 0
 ptrdiff_t FString::IndexOf (char subchar, ptrdiff_t startIndex) const
 {
 	if (startIndex > 0 && Len() <= (size_t)startIndex)
@@ -515,6 +516,7 @@ ptrdiff_t FString::IndexOf (char subchar, ptrdiff_t startIndex) const
 	}
 	return str - Chars;
 }
+#endif
 
 ptrdiff_t FString::IndexOfAny (const FString &charset, ptrdiff_t startIndex) const
 {
