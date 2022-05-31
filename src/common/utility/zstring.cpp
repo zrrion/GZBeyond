@@ -66,7 +66,7 @@ void FString::AttachToOther (const FString &other)
 	}
 }
 
-FString::FString (const char *copyStr)
+FString::FString (const char8_t *copyStr)
 {
 	if (copyStr == NULL || *copyStr == '\0')
 	{
@@ -74,19 +74,19 @@ FString::FString (const char *copyStr)
 	}
 	else
 	{
-		size_t len = strlen (copyStr);
+		size_t len = strlen (charp(copyStr));
 		AllocBuffer (len);
 		StrCopy (Chars, (char8_t*)copyStr, len);
 	}
 }
 
-FString::FString (const char *copyStr, size_t len)
+FString::FString (const char8_t *copyStr, size_t len)
 {
 	AllocBuffer (len);
 	StrCopy (Chars, (char8_t*)copyStr, len);
 }
 
-FString::FString (char oneChar)
+FString::FString (char8_t oneChar)
 {
 	if (oneChar == '\0')
 	{
@@ -109,48 +109,31 @@ FString::FString (const FString &head, const FString &tail)
 	StrCopy (Chars + len1, tail);
 }
 
-FString::FString (const FString &head, const char *tail)
+FString::FString (const FString &head, const char8_t *tail)
 {
 	size_t len1 = head.Len();
-	size_t len2 = strlen (tail);
+	size_t len2 = strlen(charp(tail));
 	AllocBuffer (len1 + len2);
 	StrCopy (Chars, head);
-	StrCopy (Chars + len1, (char8_t*)tail, len2);
+	StrCopy (Chars + len1, tail, len2);
 }
 
-FString::FString (const FString &head, char tail)
+FString::FString (const char8_t *head, const FString &tail)
 {
-	size_t len1 = head.Len();
-	AllocBuffer (len1 + 1);
-	StrCopy (Chars, head);
-	Chars[len1] = tail;
-	Chars[len1+1] = '\0';
-}
-
-FString::FString (const char *head, const FString &tail)
-{
-	size_t len1 = strlen (head);
+	size_t len1 = strlen(charp(head));
 	size_t len2 = tail.Len();
 	AllocBuffer (len1 + len2);
-	StrCopy (Chars, (char8_t*)head, len1);
+	StrCopy (Chars, head, len1);
 	StrCopy (Chars + len1, tail);
 }
 
-FString::FString (const char *head, const char *tail)
+FString::FString (const char8_t *head, const char8_t *tail)
 {
-	size_t len1 = strlen (head);
-	size_t len2 = strlen (tail);
+	size_t len1 = strlen(charp(head));
+	size_t len2 = strlen(charp(tail));
 	AllocBuffer (len1 + len2);
-	StrCopy (Chars, (char8_t*)head, len1);
+	StrCopy (Chars, head, len1);
 	StrCopy (Chars + len1, (char8_t*)tail, len2);
-}
-
-FString::FString (char head, const FString &tail)
-{
-	size_t len2 = tail.Len();
-	AllocBuffer (1 + len2);
-	Chars[0] = head;
-	StrCopy (Chars + 1, tail);
 }
 
 FString::~FString ()
@@ -322,7 +305,7 @@ FString operator + (const char *head, const FString &tail)
 
 FString FString::operator + (char tail) const
 {
-	return FString (*this, tail);
+	return FString (*this, (const char8_t*)MakeUTF8((unsigned char)tail));
 }
 
 FString operator + (char head, const FString &tail)

@@ -61,9 +61,13 @@
 std::wstring WideString(const char *);
 #endif
 
+// These are for cases where a char literal should still be allowed without having to use the 'c' word directly.
+using char_ptr = char*;
+using const_char_ptr = const char*;
+
 // Use these for calls to C string functions to avoid a literal cast
-inline constexpr char* charp(char8_t* in) { return (char*)in; }
-inline constexpr const char* charp(const char8_t* in) { return (const char*)in; }
+inline constexpr char* charp(char8_t* in) { return (char_ptr)in; }
+inline constexpr const char* charp(const char8_t* in) { return (const_char_ptr)in; }
 
 struct FStringData
 {
@@ -132,11 +136,13 @@ public:
 	// Copy constructors
 	FString (const FString &other) { AttachToOther (other); }
 	FString (FString &&other) : Chars(other.Chars) { other.ResetToNull(); }
-	FString (const char *copyStr);
-	FString (const char *copyStr, size_t copyLen);
-	FString (char oneChar);
-	FString(const TArray<char> & source) : FString(source.Data(), source.Size()) {}
-	FString(const TArray<uint8_t> & source) : FString((char*)source.Data(), source.Size()) {}
+	FString (const char8_t *copyStr);
+	FString (const char8_t *copyStr, size_t copyLen);
+	FString (const char *copyStr) : FString((const char8_t*)copyStr) {}
+	FString (const char *copyStr, size_t copyLen): FString((const char8_t*)copyStr, copyLen) {}
+	FString (nullptr_t) : FString((char8_t*)nullptr) {}
+	FString (char8_t oneChar);
+	FString(const TArray<uint8_t> & source) : FString((char8_t*)source.Data(), source.Size()) {}
 	// This is intentionally #ifdef'd. The only code which needs this is parts of the Windows backend that receive Unicode text from the system.
 #ifdef _WIN32
 	explicit FString(const wchar_t *copyStr);
@@ -146,11 +152,9 @@ public:
 
 	// Concatenation constructors
 	FString (const FString &head, const FString &tail);
-	FString (const FString &head, const char *tail);
-	FString (const FString &head, char tail);
-	FString (const char *head, const FString &tail);
-	FString (const char *head, const char *tail);
-	FString (char head, const FString &tail);
+	FString (const FString &head, const char8_t *tail);
+	FString (const char8_t *head, const FString &tail);
+	FString (const char8_t *head, const char8_t *tail);
 
 	// Other constructors
 	FString (ELumpNum);	// Create from a lump
