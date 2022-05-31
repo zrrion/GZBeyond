@@ -61,6 +61,10 @@
 std::wstring WideString(const char *);
 #endif
 
+// Use these for calls to C string functions to avoid a literal cast
+inline constexpr char* charp(char8_t* in) { return (char*)in; }
+inline constexpr const char* charp(const char8_t* in) { return (const char*)in; }
+
 struct FStringData
 {
 	unsigned int Len;		// Length of string, excluding terminating null
@@ -68,26 +72,26 @@ struct FStringData
 	int RefCount;			// < 0 means it's locked
 	// char StrData[xxx];
 
-	char *Chars()
+	char8_t *Chars()
 	{
-		return (char *)(this + 1);
+		return (char8_t *)(this + 1);
 	}
 
-	const char *Chars() const
+	const char8_t *Chars() const
 	{
-		return (const char *)(this + 1);
+		return (const char8_t *)(this + 1);
 	}
 
-	char *AddRef()
+	char8_t *AddRef()
 	{
 		if (RefCount < 0)
 		{
-			return (char *)(MakeCopy() + 1);
+			return (char8_t *)(MakeCopy() + 1);
 		}
 		else
 		{
 			RefCount++;
-			return (char *)(this + 1);
+			return (char8_t *)(this + 1);
 		}
 	}
 
@@ -113,7 +117,7 @@ struct FNullStringData
 	unsigned int Len;
 	unsigned int AllocLen;
 	int RefCount;
-	char Nothing[2];
+	char8_t Nothing[2];
 };
 
 enum ELumpNum
@@ -168,11 +172,11 @@ public:
 	explicit operator bool() = delete; // this is needed to render the operator const char * ineffective when used in boolean constructs.
 	bool operator !() = delete;
 
-	operator const char *() const { return Chars; }
+	operator const char *() const { return (char*)Chars; }
 
-	const char *GetChars() const { return Chars; }
+	const char *GetChars() const { return (char*)Chars; }
 
-	const char &operator[] (int index) const { return Chars[index]; }
+	const char &operator[] (int index) const { return ((char*)Chars)[index]; }
 #if defined(_WIN32) && !defined(_WIN64) && defined(_MSC_VER)
 	// Compiling 32-bit Windows source with MSVC: size_t is typedefed to an
 	// unsigned int with the 64-bit portability warning attribute, so the
@@ -180,10 +184,10 @@ public:
 	// spurious warnings.
 	const char &operator[] (size_t index) const { return Chars[index]; }
 #else
-	const char &operator[] (unsigned int index) const { return Chars[index]; }
+	const char &operator[] (unsigned int index) const { return ((char*)Chars)[index]; }
 #endif
-	const char &operator[] (unsigned long index) const { return Chars[index]; }
-	const char &operator[] (unsigned long long index) const { return Chars[index]; }
+	const char &operator[] (unsigned long index) const { return ((char*)Chars)[index]; }
+	const char &operator[] (unsigned long long index) const { return ((char*)Chars)[index]; }
 
 	FString &operator = (const FString &other);
 	FString &operator = (FString &&other);
@@ -205,8 +209,8 @@ public:
 	FString &operator << (const char *tail) { return *this += tail; }
 	FString &operator << (char tail) { return *this += tail; }
 
-	const char &Front() const { assert(IsNotEmpty()); return Chars[0]; }
-	const char &Back() const { assert(IsNotEmpty()); return Chars[Len() - 1]; }
+	const char &Front() const { assert(IsNotEmpty()); return ((char*)Chars)[0]; }
+	const char &Back() const { assert(IsNotEmpty()); return ((char*)Chars)[Len() - 1]; }
 
 	FString Left (size_t numChars) const;
 	FString Right (size_t numChars) const;
@@ -329,15 +333,15 @@ public:
 	void Truncate (size_t newlen);
 	void Remove(size_t index, size_t remlen);
 
-	int Compare (const FString &other) const { return strcmp (Chars, other.Chars); }
-	int Compare (const char *other) const { return strcmp (Chars, other); }
-	int Compare(const FString &other, int len) const { return strncmp(Chars, other.Chars, len); }
-	int Compare(const char *other, int len) const { return strncmp(Chars, other, len); }
+	int Compare (const FString &other) const { return strcmp (charp(Chars), charp(other.Chars)); }
+	int Compare (const char *other) const { return strcmp (charp(Chars), other); }
+	int Compare(const FString &other, int len) const { return strncmp(charp(Chars), charp(other.Chars), len); }
+	int Compare(const char *other, int len) const { return strncmp(charp(Chars), other, len); }
 
-	int CompareNoCase (const FString &other) const { return stricmp (Chars, other.Chars); }
-	int CompareNoCase (const char *other) const { return stricmp (Chars, other); }
-	int CompareNoCase(const FString &other, int len) const { return strnicmp(Chars, other.Chars, len); }
-	int CompareNoCase(const char *other, int len) const { return strnicmp(Chars, other, len); }
+	int CompareNoCase (const FString &other) const { return stricmp (charp(Chars), charp(other.Chars)); }
+	int CompareNoCase (const char *other) const { return stricmp (charp(Chars), other); }
+	int CompareNoCase(const FString &other, int len) const { return strnicmp(charp(Chars), charp(other.Chars), len); }
+	int CompareNoCase(const char *other, int len) const { return strnicmp(charp(Chars), other, len); }
 
 	enum EmptyTokenType
 	{
@@ -365,10 +369,10 @@ protected:
 	void ReallocBuffer (size_t newlen);
 
 	static int FormatHelper (void *data, const char *str, int len);
-	static void StrCopy (char *to, const char *from, size_t len);
-	static void StrCopy (char *to, const FString &from);
+	static void StrCopy (char8_t *to, const char8_t *from, size_t len);
+	static void StrCopy (char8_t *to, const FString &from);
 
-	char *Chars;
+	char8_t *Chars;
 
 	static FNullStringData NullString;
 

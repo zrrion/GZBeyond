@@ -48,7 +48,7 @@ FNullStringData FString::NullString =
 	0,			// Length of string
 	2,			// Size of character buffer
 	2,			// RefCount; it must never be modified, so keep it above 1 user at all times
-	"\0"
+	u8"\0"
 };
 
 void FString::AttachToOther (const FString &other)
@@ -76,14 +76,14 @@ FString::FString (const char *copyStr)
 	{
 		size_t len = strlen (copyStr);
 		AllocBuffer (len);
-		StrCopy (Chars, copyStr, len);
+		StrCopy (Chars, (char8_t*)copyStr, len);
 	}
 }
 
 FString::FString (const char *copyStr, size_t len)
 {
 	AllocBuffer (len);
-	StrCopy (Chars, copyStr, len);
+	StrCopy (Chars, (char8_t*)copyStr, len);
 }
 
 FString::FString (char oneChar)
@@ -115,7 +115,7 @@ FString::FString (const FString &head, const char *tail)
 	size_t len2 = strlen (tail);
 	AllocBuffer (len1 + len2);
 	StrCopy (Chars, head);
-	StrCopy (Chars + len1, tail, len2);
+	StrCopy (Chars + len1, (char8_t*)tail, len2);
 }
 
 FString::FString (const FString &head, char tail)
@@ -132,7 +132,7 @@ FString::FString (const char *head, const FString &tail)
 	size_t len1 = strlen (head);
 	size_t len2 = tail.Len();
 	AllocBuffer (len1 + len2);
-	StrCopy (Chars, head, len1);
+	StrCopy (Chars, (char8_t*)head, len1);
 	StrCopy (Chars + len1, tail);
 }
 
@@ -141,8 +141,8 @@ FString::FString (const char *head, const char *tail)
 	size_t len1 = strlen (head);
 	size_t len2 = strlen (tail);
 	AllocBuffer (len1 + len2);
-	StrCopy (Chars, head, len1);
-	StrCopy (Chars + len1, tail, len2);
+	StrCopy (Chars, (char8_t*)head, len1);
+	StrCopy (Chars + len1, (char8_t*)tail, len2);
 }
 
 FString::FString (char head, const FString &tail)
@@ -164,7 +164,7 @@ char *FString::LockNewBuffer(size_t len)
 	AllocBuffer(len);
 	assert(Data()->RefCount == 1);
 	Data()->RefCount = -1;
-	return Chars;
+	return (char*)Chars;
 }
 
 char *FString::LockBuffer()
@@ -185,7 +185,7 @@ char *FString::LockBuffer()
 		old->Release();
 		Data()->RefCount = -1;
 	}
-	return Chars;
+	return (char*)Chars;
 }
 
 void FString::UnlockBuffer()
@@ -232,7 +232,7 @@ FString &FString::operator = (FString &&other)
 
 FString &FString::operator = (const char *copyStr)
 {
-	if (copyStr != Chars)
+	if ((char8_t*)copyStr != Chars)
 	{
 		if (copyStr == NULL || *copyStr == '\0')
 		{
@@ -245,7 +245,7 @@ FString &FString::operator = (const char *copyStr)
 			// we've finished the copy.
 			FStringData *old = Data();
 
-			if (copyStr < Chars || copyStr >= Chars + old->Len)
+			if ((char8_t*)copyStr < Chars || (char8_t*)copyStr >= Chars + old->Len)
 			{
 				// We know the string isn't in our buffer, so release it now
 				// to reduce the potential for needless memory fragmentation.
@@ -254,7 +254,7 @@ FString &FString::operator = (const char *copyStr)
 			}
 			size_t len = strlen (copyStr);
 			AllocBuffer (len);
-			StrCopy (Chars, copyStr, len);
+			StrCopy (Chars, (char8_t*)copyStr, len);
 			if (old != NULL)
 			{
 				old->Release();
@@ -283,7 +283,7 @@ void FString::AppendFormat (const char *fmt, ...)
 void FString::VFormat (const char *fmt, va_list arglist)
 {
 	Data()->Release();
-	Chars = (char *)(FStringData::Alloc(128) + 1);
+	Chars = (char8_t *)(FStringData::Alloc(128) + 1);
 	StringFormat::VWorker (FormatHelper, this, fmt, arglist);
 }
 
@@ -300,7 +300,7 @@ int FString::FormatHelper (void *data, const char *cstr, int len)
 	{
 		str->ReallocBuffer((len1 + len + 127) & ~127);
 	}
-	StrCopy (str->Chars + len1, cstr, len);
+	StrCopy (str->Chars + len1, (char8_t*)cstr, len);
 	str->Data()->Len = (unsigned int)(len1 + len);
 	return len;
 }
@@ -344,7 +344,7 @@ FString &FString::operator += (const char *tail)
 	size_t len1 = Len();
 	size_t len2 = strlen(tail);
 	ReallocBuffer (len1 + len2);
-	StrCopy (Chars + len1, tail, len2);
+	StrCopy (Chars + len1, (char8_t*)tail, len2);
 	return *this;
 }
 
@@ -363,7 +363,7 @@ FString &FString::AppendCStrPart (const char *tail, size_t tailLen)
 	{
 		size_t len1 = Len();
 		ReallocBuffer(len1 + tailLen);
-		StrCopy(Chars + len1, tail, tailLen);
+		StrCopy(Chars + len1, (char8_t*)tail, tailLen);
 	}
 	return *this;
 }
@@ -373,7 +373,7 @@ FString &FString::CopyCStrPart(const char *tail, size_t tailLen)
 	if (tailLen > 0)
 	{
 		ReallocBuffer(tailLen);
-		StrCopy(Chars, tail, tailLen);
+		StrCopy(Chars, (char8_t*)tail, tailLen);
 	}
 	else
 	{
@@ -451,7 +451,7 @@ FString FString::Left (size_t numChars) const
 	{
 		numChars = len;
 	}
-	return FString (Chars, numChars);
+	return FString ((char*)Chars, numChars);
 }
 
 FString FString::Right (size_t numChars) const
@@ -461,7 +461,7 @@ FString FString::Right (size_t numChars) const
 	{
 		numChars = len;
 	}
-	return FString (Chars + len - numChars, numChars);
+	return FString ((char*)Chars + len - numChars, numChars);
 }
 
 FString FString::Mid (size_t pos, size_t numChars) const
@@ -475,7 +475,7 @@ FString FString::Mid (size_t pos, size_t numChars) const
 	{
 		numChars = len - pos;
 	}
-	return FString (Chars + pos, numChars);
+	return FString ((char*)Chars + pos, numChars);
 }
 
 void FString::AppendCharacter(int codepoint)
@@ -502,7 +502,7 @@ void FString::DeleteLastCharacter()
 
 ptrdiff_t FString::IndexOf (const FString &substr, ptrdiff_t startIndex) const
 {
-	return IndexOf (substr.Chars, startIndex);
+	return IndexOf ((char*)substr.Chars, startIndex);
 }
 
 ptrdiff_t FString::IndexOf (const char *substr, ptrdiff_t startIndex) const
@@ -511,7 +511,7 @@ ptrdiff_t FString::IndexOf (const char *substr, ptrdiff_t startIndex) const
 	{
 		return -1;
 	}
-	char *str = strstr (Chars + startIndex, substr);
+	auto str = (char8_t*)strstr (charp(Chars) + startIndex, substr);
 	if (str == NULL)
 	{
 		return -1;
@@ -525,7 +525,7 @@ ptrdiff_t FString::IndexOf (char subchar, ptrdiff_t startIndex) const
 	{
 		return -1;
 	}
-	char *str = strchr (Chars + startIndex, subchar);
+	auto str = (char8_t*)strchr (charp(Chars) + startIndex, subchar);
 	if (str == NULL)
 	{
 		return -1;
@@ -535,7 +535,7 @@ ptrdiff_t FString::IndexOf (char subchar, ptrdiff_t startIndex) const
 
 ptrdiff_t FString::IndexOfAny (const FString &charset, ptrdiff_t startIndex) const
 {
-	return IndexOfAny (charset.Chars, startIndex);
+	return IndexOfAny ((char*)charset.Chars, startIndex);
 }
 
 ptrdiff_t FString::IndexOfAny (const char *charset, ptrdiff_t startIndex) const
@@ -544,7 +544,7 @@ ptrdiff_t FString::IndexOfAny (const char *charset, ptrdiff_t startIndex) const
 	{
 		return -1;
 	}
-	char *brk = strpbrk (Chars + startIndex, charset);
+	auto brk = (char8_t*)strpbrk (charp(Chars) + startIndex, charset);
 	if (brk == NULL)
 	{
 		return -1;
@@ -584,7 +584,7 @@ ptrdiff_t FString::LastIndexOfBroken (const FString &_substr, ptrdiff_t endIndex
 	substrlen--;
 	while (--endIndex >= ptrdiff_t(substrlen))
 	{
-		if (strncmp (substr, Chars + endIndex - substrlen, substrlen + 1) == 0)
+		if (strncmp (substr, charp(Chars) + endIndex - substrlen, substrlen + 1) == 0)
 		{
 			return endIndex;
 		}
@@ -594,7 +594,7 @@ ptrdiff_t FString::LastIndexOfBroken (const FString &_substr, ptrdiff_t endIndex
 
 ptrdiff_t FString::LastIndexOfAny (const FString &charset) const
 {
-	return LastIndexOfAny (charset.Chars, Len());
+	return LastIndexOfAny ((char*)charset.Chars, Len());
 }
 
 ptrdiff_t FString::LastIndexOfAny (const char *charset) const
@@ -604,7 +604,7 @@ ptrdiff_t FString::LastIndexOfAny (const char *charset) const
 
 ptrdiff_t FString::LastIndexOfAny (const FString &charset, ptrdiff_t endIndex) const
 {
-	return LastIndexOfAny (charset.Chars, endIndex);
+	return LastIndexOfAny ((char*)charset.Chars, endIndex);
 }
 
 ptrdiff_t FString::LastIndexOfAny (const char *charset, ptrdiff_t endIndex) const
@@ -625,12 +625,12 @@ ptrdiff_t FString::LastIndexOfAny (const char *charset, ptrdiff_t endIndex) cons
 
 ptrdiff_t FString::LastIndexOf (const FString &substr) const
 {
-	return LastIndexOf(substr.Chars, Len() - substr.Len(), substr.Len());
+	return LastIndexOf((char*)substr.Chars, Len() - substr.Len(), substr.Len());
 }
 
 ptrdiff_t FString::LastIndexOf (const FString &substr, ptrdiff_t endIndex) const
 {
-	return LastIndexOf(substr.Chars, endIndex, substr.Len());
+	return LastIndexOf((char*)substr.Chars, endIndex, substr.Len());
 }
 
 ptrdiff_t FString::LastIndexOf (const char *substr) const
@@ -651,7 +651,7 @@ ptrdiff_t FString::LastIndexOf (const char *substr, ptrdiff_t endIndex, size_t s
 	}
 	while (endIndex >= 0)
 	{
-		if (strncmp (substr, Chars + endIndex, substrlen) == 0)
+		if (strncmp (substr, charp(Chars) + endIndex, substrlen) == 0)
 		{
 			return endIndex;
 		}
@@ -740,7 +740,7 @@ void FString::StripLeft ()
 
 void FString::StripLeft (const FString &charset)
 {
-	return StripLeft (charset.Chars);
+	return StripLeft ((char*)charset.Chars);
 }
 
 void FString::StripLeft (const char *charset)
@@ -802,7 +802,7 @@ void FString::StripRight ()
 
 void FString::StripRight (const FString &charset)
 {
-	return StripRight (charset.Chars);
+	return StripRight ((char*)charset.Chars);
 }
 
 void FString::StripRight (const char *charset)
@@ -870,7 +870,7 @@ void FString::StripLeftRight ()
 
 void FString::StripLeftRight (const FString &charset)
 {
-	return StripLeftRight (charset.Chars);
+	return StripLeftRight ((char*)charset.Chars);
 }
 
 void FString::StripLeftRight (const char *charset)
@@ -907,7 +907,7 @@ void FString::StripLeftRight (const char *charset)
 
 void FString::Insert (size_t index, const FString &instr)
 {
-	Insert (index, instr.Chars, instr.Len());
+	Insert (index, (char*)instr.Chars, instr.Len());
 }
 
 void FString::Insert (size_t index, const char *instr)
@@ -935,7 +935,7 @@ void FString::Insert (size_t index, const char *instr, size_t instrlen)
 			FStringData *old = Data();
 			AllocBuffer(mylen + instrlen);
 			StrCopy(Chars, old->Chars(), index);
-			StrCopy(Chars + index, instr, instrlen);
+			StrCopy(Chars + index, (char8_t*)instr, instrlen);
 			StrCopy(Chars + index + instrlen, old->Chars() + index, mylen - index);
 			old->Release();
 		}
@@ -1029,17 +1029,17 @@ void FString::MergeChars (const char *charset, char newchar)
 
 void FString::Substitute (const FString &oldstr, const FString &newstr)
 {
-	return Substitute (oldstr.Chars, newstr.Chars, oldstr.Len(), newstr.Len());
+	return Substitute ((char*)oldstr.Chars, (char*)newstr.Chars, oldstr.Len(), newstr.Len());
 }
 
 void FString::Substitute (const char *oldstr, const FString &newstr)
 {
-	return Substitute (oldstr, newstr.Chars, strlen(oldstr), newstr.Len());
+	return Substitute (oldstr, (char*)newstr.Chars, strlen(oldstr), newstr.Len());
 }
 
 void FString::Substitute (const FString &oldstr, const char *newstr)
 {
-	return Substitute (oldstr.Chars, newstr, oldstr.Len(), strlen(newstr));
+	return Substitute ((char*)oldstr.Chars, newstr, oldstr.Len(), strlen(newstr));
 }
 
 void FString::Substitute (const char *oldstr, const char *newstr)
@@ -1053,7 +1053,7 @@ void FString::Substitute (const char *oldstr, const char *newstr, size_t oldstrl
 	LockBuffer();
 	for (size_t checkpt = 0; checkpt < Len(); )
 	{
-		char *match = strstr (Chars + checkpt, oldstr);
+		auto match = (char8_t*)strstr (charp(Chars) + checkpt, oldstr);
 		size_t len = Len();
 		if (match != NULL)
 		{
@@ -1085,13 +1085,13 @@ octdigits	= [0-7];
 
 ("0" octdigits+ | "0" [xX] hexdigits+ | (digits \ '0') digits*) { return true; }
 [\000-\377] { return false; }*/
-	const char *YYCURSOR = Chars;
-	char yych;
+	const char8_t *YYCURSOR = Chars;
+	char8_t yych;
 
 	yych = *YYCURSOR;
 
 	// Skip preceding whitespace
-	while (yych != '\0' && isspace((unsigned char)yych)) { yych = *++YYCURSOR; }
+	while (yych != '\0' && isspace(yych)) { yych = *++YYCURSOR; }
 
 	// Check for sign
 	if (yych == '+' || yych == '-') { yych = *++YYCURSOR; }
@@ -1142,14 +1142,14 @@ digits		= [0-9];
 (digits+ | digits* "." digits+) ([dDeE] [+-]? digits+)? { return true; }
 [\000-\377] { return false; }
 */
-	const char *YYCURSOR = Chars;
-	char yych;
+	const char8_t *YYCURSOR = Chars;
+	char8_t yych;
 	bool gotdig = false;
 
 	yych = *YYCURSOR;
 
 	// Skip preceding whitespace
-	while (yych != '\0' && isspace((unsigned char)yych)) { yych = *++YYCURSOR; }
+	while (yych != '\0' && isspace(yych)) { yych = *++YYCURSOR; }
 
 	// Check for sign
 	if (yych == '+' || yych == '-') { yych = *++YYCURSOR; }
@@ -1186,33 +1186,33 @@ digits		= [0-9];
 
 int64_t FString::ToLong (int base) const
 {
-	return strtoll (Chars, NULL, base);
+	return strtoll (charp(Chars), NULL, base);
 }
 
 uint64_t FString::ToULong (int base) const
 {
-	return strtoull (Chars, NULL, base);
+	return strtoull (charp(Chars), NULL, base);
 }
 
 double FString::ToDouble () const
 {
-	return strtod (Chars, NULL);
+	return strtod (charp(Chars), NULL);
 }
 
-void FString::StrCopy (char *to, const char *from, size_t len)
+void FString::StrCopy (char8_t *to, const char8_t *from, size_t len)
 {
-	memcpy (to, from, len*sizeof(char));
+	memcpy (to, from, len*sizeof(char8_t));
 	to[len] = 0;
 }
 
-void FString::StrCopy (char *to, const FString &from)
+void FString::StrCopy (char8_t *to, const FString &from)
 {
 	StrCopy (to, from.Chars, from.Len());
 }
 
 void FString::AllocBuffer (size_t len)
 {
-	Chars = (char *)(FStringData::Alloc(len) + 1);
+	Chars = (char8_t *)(FStringData::Alloc(len) + 1);
 	Data()->Len = (unsigned int)len;
 }
 
@@ -1229,7 +1229,7 @@ void FString::ReallocBuffer (size_t newlen)
 	{
 		if (newlen > Data()->AllocLen)
 		{
-			Chars = (char *)(Data()->Realloc(newlen) + 1);
+			Chars = (char8_t *)(Data()->Realloc(newlen) + 1);
 		}
 		Data()->Len = (unsigned int)newlen;
 	}
