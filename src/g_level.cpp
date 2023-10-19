@@ -1854,7 +1854,11 @@ void FLevelLocals::Init()
 	flags |= info->flags;
 	flags2 |= info->flags2;
 	flags3 |= info->flags3;
+#ifdef UNFRIEBDLY_OPTIONS
 	vkdflags |= info->vkdflags;
+#else
+	vkdflags = 0;
+#endif
 	levelnum = info->levelnum;
 	Music = info->Music;
 	musicorder = info->musicorder;
