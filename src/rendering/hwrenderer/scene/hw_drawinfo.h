@@ -320,7 +320,7 @@ public:
 
 	void SetFallbackLightMode()
 	{
-		lightmode = ELightMode::Doom;
+		lightmode = ELightMode::DoomBright;
 	}
 
 };
