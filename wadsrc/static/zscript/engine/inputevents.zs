@@ -176,6 +176,8 @@ struct InputEvent native play version("2.4")
         Key_Joy6 = (Key_FirstJoyButton+5),
         Key_Joy7 = (Key_FirstJoyButton+6),
         Key_Joy8 = (Key_FirstJoyButton+7),
+        Key_Joy9 = (Key_FirstJoyButton+8),
+        Key_Joy10 = (Key_FirstJoyButton+9),
         Key_LastJoyButton = 0x187,
         Key_JoyPOV1_Up = 0x188,
         Key_JoyPOV1_Right = 0x189,

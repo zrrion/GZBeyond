@@ -784,15 +784,22 @@ void FDInputJoystick::SetDefaultConfig()
 	{
 		Axes[0].GameAxis = JOYAXIS_Side;
 		Axes[1].GameAxis = JOYAXIS_Forward;
-		Axes[2].GameAxis = JOYAXIS_Yaw;
+		//Axes[2].GameAxis = JOYAXIS_Yaw;
+		Axes[2].GameAxis = JOYAXIS_None;
 		// Four axes? First two are movement, last two are looking around.
 		if (Axes.Size() >= 4)
 		{
-			Axes[3].GameAxis = JOYAXIS_Pitch;	Axes[3].Multiplier = 0.75f;
+			//Axes[3].GameAxis = JOYAXIS_Pitch;	Axes[3].Multiplier = 0.75f;
+			Axes[3].GameAxis = JOYAXIS_None;
 			// Five axes? Use the fifth one for moving up and down.
 			if (Axes.Size() >= 5)
 			{
-				Axes[4].GameAxis = JOYAXIS_Up;
+				//Axes[4].GameAxis = JOYAXIS_Up;
+				Axes[4].GameAxis = JOYAXIS_Pitch;	Axes[4].Multiplier = 0.75f;
+				if (Axes.Size() >= 6)
+				{
+					Axes[5].GameAxis = JOYAXIS_Yaw;
+				}
 			}
 		}
 	}

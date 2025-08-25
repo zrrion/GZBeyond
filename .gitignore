@@ -16,6 +16,7 @@
 /build_vc2015-64
 /build_vc2017-64
 /build
+/Builds
 /llvm
 .vs
 .idea
@@ -32,3 +33,5 @@
 /build_vc2019-32
 /build__
 gzdoom-crash.log
+/out
+CMakeSettings.json
