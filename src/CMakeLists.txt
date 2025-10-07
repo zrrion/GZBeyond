@@ -1,3 +1,11 @@
+if(UNIX AND NOT APPLE)
+	set(MY_EXTRA_LIBS
+		/lib/x86_64-linux-gnu/libSDL2-2.0.so.0
+		/lib/x86_64-linux-gnu/libzmusic.so.1
+		/lib/x86_64-linux-gnu/libvpx.so.9
+	)
+endif()
+
 cmake_minimum_required( VERSION 3.16.0 )
 
 include(precompiled_headers)
@@ -1548,3 +1556,15 @@ source_group("Launcher" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/launche
 source_group("Versioning" FILES version.h win32/zdoom.rc)
 source_group("Xlat" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/xlat/.+" FILES ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.h)
 source_group("Source Files" FILES ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h common/engine/sc_man_scanner.re)
+
+if(UNIX AND NOT APPLE)
+	add_custom_command(
+		TARGET zdoom POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:zdoom>/lib"
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different
+			${MY_EXTRA_LIBS}
+			"$<TARGET_FILE_DIR:zdoom>/lib"
+		USES_TERMINAL
+		COMMAND_EXPAND_LISTS
+	)
+endif()

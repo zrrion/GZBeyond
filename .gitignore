@@ -35,3 +35,4 @@
 gzdoom-crash.log
 /out
 CMakeSettings.json
+/beyond_build
